@@ -1,0 +1,180 @@
+<html>
+    <head>
+
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=0.5">
+
+        <link href="../main.css" rel="stylesheet" type="text/css">
+        <link rel="alternate" type="application/atom+xml" href="/atom.xml" title="Atom feed">
+        <link rel="shortcut icon" href="static/images/Yc.jpg">
+
+        <title> The Y combinator </title>
+
+    </head>
+
+    <body>
+        <script>
+            if (/mobile/i.test(navigator.userAgent) || /android/i.test(navigator.userAgent))
+            {
+               document.body.classList.add('mobile');
+            }
+        </script>
+
+        <div class="inner">
+           <h1>The Y combinator</h1>
+
+<p>May be the most famous recursive function is factorial function, Below is a  example in javascript:</p>
+
+<pre><code>function  fact(n) {
+    if (n === 0) return 1;
+    return n * fact(n - 1); 
+};
+</code></pre>
+
+<p>is equivalent to:</p>
+
+<pre><code>let fact = function (n) {
+    if (n === 0) return 1;
+        return n * fact(n - 1);
+};
+</code></pre>
+
+<p>actually named function is just a sytnax sugar, it will transformed into the latter form eventually. I will use arrow function for convenience, like below:</p>
+
+<pre><code>let fact = (n) =&gt; {
+    if (n === 0) return 1;
+    return n * fact(n - 1);
+};
+</code></pre>
+
+<p>Look at the function body, it use the fact which we want to define. It's weird. How could we reference something we haven't defined. I will talk about this later. Now, I will try to find a way to define this function not reference itself.</p>
+
+<p>Let's do the first try:</p>
+
+<pre><code>let fact1 = (n) =&gt; {
+    if (n === 0) return 1;
+    return n * &lt;_&gt; (n - 1);
+};
+</code></pre>
+
+<p>What's the underscore should be fill with?  Obviously, we cannot fill with fact1. we cannot fill something else. Maybe we can get it from parameter, It's ridiculous, but it's legal.</p>
+
+<p>So we can try this:</p>
+
+<pre><code>let fact2 = (fact) =&gt; (n) = &gt; {
+    if (n === 0) return 1;
+    return n * fact(n - 1);
+};
+</code></pre>
+
+<p>Does it work? Of course, it works. Are we done. Of course not.  We need a parampater which is what we want to define. It seem suggest we could pass the fact2 to fact2, like below:</p>
+
+<pre><code>// If we pass fact2 to fact2, we get:
+fact2(fact2) = n =&gt; {
+    if (n === 0) return 1;
+    return n * fact2(n - 1);   // wrong
+};
+// oops, fact2 need two parampater, fact need one parampater, It doesn't match.
+</code></pre>
+
+<p>Another try:</p>
+
+<pre><code>let fact3 = (mk_fact) =&gt; (n) =&gt; {
+    if (n === 0) return 1;
+    return n * mk_fact(mk_fact)(n - 1);
+};
+
+// if we pass fact3 to fact3. we get:
+fact3(fact3) = n =&gt; {
+    if (n === 0) return 1;
+    return n * fact3(fact3)(n-1);
+};
+// It seems fine.
+</code></pre>
+
+<p>Does fact3 work? It seems work. Let's do some example.</p>
+
+<pre><code>let fact = fact3(fact3);
+
+fact(0)  =  {
+    if (0 == 0) return 1;  // return 1.
+        ........             // we don't need this.   
+}
+= 1
+
+fact(1) = {
+    if (1 == 0) return 1; 
+        return 1 * fact(0);    // fact(0) = 1, 1 * 1 = 1, so return 1; 
+}
+= 1
+</code></pre>
+
+<p>Clearly, It works. Although it's a bit awkard awkward, but it works. Let's see if we can do better.</p>
+
+<pre><code>let fact = fact3(fact3);
+
+// full expanded
+let fact = ((mk_fact) =&gt; (n) =&gt; {
+    if (n === 0) return 1;
+    return  n * mk_fact(mk_fact)(n-1);
+})((mk_fact) =&gt; (n) =&gt; {
+    if (n === 0) return 1;
+    return n * mk_fact(mk_fact)(n - 1);
+});
+
+// It's be a little ugly, let's simplify it.
+// we know f(f) = ((f) =&gt; f(f))(f)
+// so we could do this:
+let fact = ((mk_fact) =&gt; mk_fact(mk_fact))(
+    (mk_fact) =&gt; (n) =&gt; {
+        if (n === 0) return 1;
+        return n * mk_fact(mk_fact)(n - 1);      
+       } 
+);
+
+// do more
+let fact = ((mk_fact) =&gt; mk_fact(mk_fact))(
+    (mk_fact) =&gt; (n) =&gt; ((_fact) =&gt; {
+        if (n === 0) return 1;
+        return n * _fact(n - 1);         
+       })((x) =&gt; mk_fact(mk_fact)(x)));
+
+
+// this
+let fact = ((mk_fact) =&gt; mk_fact(mk_fact))(
+    (mk_fact)  =&gt; ((_fact) =&gt; (n) =&gt; {
+        if (n === 0) return 1;
+        return n * _fact(n - 1);         
+       })((x) =&gt; mk_fact(mk_fact)(x)));
+
+// now we see this:
+(_fact) =&gt; (n) =&gt; {
+    if (n === 0) return 1;
+    return n * _fact(n - 1);
+}
+
+// this is the first function we define, now make it parameterize
+let fact = ((fa) =&gt;  ((mk_fact) =&gt; mk_fact(mk_fact))((mk_fact) =&gt; fa((x) =&gt; mk_fact(mk_fact)(x))))
+((_fact) =&gt; (n) =&gt; {
+    if (n === 0) return 1;
+    return n * _fact(n - 1);
+});
+
+// What do we get. For convenience, we define some helper variable.
+let Y = (fa) =&gt; ((mk_fact) =&gt; mk_fact(mk_fact))((mk_fact) =&gt; fa(x) =&gt; mk_fact(mk_fact)(x)));
+
+let F = (fact) =&gt; (n) =&gt; {
+    if (n === 0) return 1;
+    return n * fact(n - 1);
+};
+</code></pre>
+
+<p>We can see the F is the first function we define. <code>F(fact) == fact'</code>,  F accpet a fact function we want to define, and return a real fact function. and <code>Y(F) = fact</code>, and Y accept F. and return a real fact function. So Y can make a not exist function become reality.</p>
+
+<p>Y has a property: <code>F(fact) == fact == Y(F) == F(Y(F))</code>, we usually it the  Y combinator.</p>
+
+        </div>
+
+    </body>
+
+</html>
