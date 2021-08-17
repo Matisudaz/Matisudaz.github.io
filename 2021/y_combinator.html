@@ -67,7 +67,7 @@
 };
 </code></pre>
 
-<p>Does it work? Of course, it works. Are we done. Of course not.  We need a parampater which is what we want to define. It seem suggest we could pass the fact2 to fact2, like below:</p>
+<p>Does it work? Of course, it works. Are we done? Of course not.  We need a parampater which is what we want to define. It seem suggest we could pass the fact2 to fact2, like below:</p>
 
 <pre><code>// If we pass fact2 to fact2, we get:
 fact2(fact2) = n =&gt; {
@@ -109,7 +109,7 @@ fact(1) = {
 = 1
 </code></pre>
 
-<p>Clearly, It works. Although it's a bit awkard awkward, but it works. Let's see if we can do better.</p>
+<p>Clearly, It works. Although it's a bit awkard, but it works. Let's see if we can do better.</p>
 
 <pre><code>let fact = fact3(fact3);
 
@@ -171,7 +171,7 @@ let F = (fact) =&gt; (n) =&gt; {
 
 <p>We can see the F is the first function we define. <code>F(fact) == fact'</code>,  F accpet a fact function we want to define, and return a real fact function. and <code>Y(F) = fact</code>, and Y accept F. and return a real fact function. So Y can make a not exist function become reality.</p>
 
-<p>Y has a property: <code>F(fact) == fact == Y(F) == F(Y(F))</code>, we usually it the  Y combinator.</p>
+<p>Y has a property: <code>F(fact) == fact == Y(F) == F(Y(F))</code>, we usually name it the  Y combinator.</p>
 
         </div>
 
